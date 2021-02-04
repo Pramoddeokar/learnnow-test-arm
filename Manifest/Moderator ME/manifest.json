@@ -1,0 +1,51 @@
+{
+  "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.5/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.5",
+  "version": "1.0.0",
+  "id": "<<manifestId>>",
+  "packageName": "com.microsoft.teams.apptemplates.base",
+  "developer": {
+    "name": "Contoso",
+    "websiteUrl": "<website url>",
+    "privacyUrl": "<privacy url>",
+    "termsOfUseUrl": "<terms of use url>"
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "name": {
+    "short": "Course Companion - Configuration",
+    "full": "Course Companion - Configuration"
+  },
+  "description": {
+    "short": "Course Companion lets educators organize learning resources and modules.",
+    "full": "Course Companion lets educators organize learning resources and modules in a central place that offers a visual search-and-browse experience for students. The app makes it easy to save, share, and collaborate around learning content."
+  },
+  "composeExtensions": [
+    {
+      "botId": "<<botId>>",
+      "canUpdateConfiguration": true,
+      "commands": [
+        {
+          "id": "learnnow",
+          "type": "action",
+          "title": "Course Companion",
+          "description": "Course Companion",
+          "initialRun": true,
+          "fetchTask": true,
+          "context": [
+            "compose",
+            "message"
+          ]
+        }
+      ]
+    }
+  ],
+  "accentColor": "#FFFFFF",
+  "permissions": [
+    "identity",
+    "messageTeamMembers"
+  ],
+  "validDomains": []
+}

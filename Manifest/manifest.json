@@ -1,0 +1,102 @@
+{
+  "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.5/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.5",
+  "version": "1.0.0",
+  "id": "<<manifestId>>",
+  "packageName": "com.microsoft.teams.apptemplates.base",
+  "developer": {
+    "name": "Contoso",
+    "websiteUrl": "<website url>",
+    "privacyUrl": "<privacy url>",
+    "termsOfUseUrl": "<terms of use url>"
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "name": {
+    "short": "Course Companion",
+    "full": "Course Companion"
+  },
+  "description": {
+    "short": "Course Companion lets educators organize learning resources and modules.",
+    "full": "Course Companion lets educators organize learning resources and modules in a central place that offers a visual search-and-browse experience for students. The app makes it easy to save, share, and collaborate around learning content."
+  },
+  "composeExtensions": [
+    {
+      "botId": "<<botId>>",
+      "canUpdateConfiguration": true,
+      "commands": [
+        {
+          "id": "resource",
+          "context": [
+            "compose",
+            "commandBox"
+          ],
+          "description": "Test command to run query",
+          "title": "Resources",
+          "type": "query",
+          "parameters": [
+            {
+              "name": "searchQuery",
+              "title": "Search Query",
+              "description": "Find",
+              "inputType": "text"
+            }
+          ],
+          "initialRun": true
+        },
+        {
+          "id": "learningmodule",
+          "title": "Learning modules",
+          "description": "Test command to run query",
+          "type": "query",
+          "parameters": [
+            {
+              "name": "searchQuery",
+              "title": "Search Query",
+              "description": "Find",
+              "inputType": "text"
+            }
+          ],
+          "initialRun": true
+        }
+      ]
+    }
+  ],
+  "staticTabs": [
+    {
+      "entityId": "<<Entity id>>",
+      "name": "Discover",
+      "contentUrl": "<<websiteurl>>/discover",
+      "websiteUrl": "<<websiteurl>>/discover",
+      "scopes": [
+        "personal"
+      ]
+    },
+    {
+      "entityId": "<<Entity id>>",
+      "name": "Discover",
+      "contentUrl": "<<websiteurl>>/your-learning",
+      "websiteUrl": "<<websiteurl>>/your-learning",
+      "scopes": [
+        "personal"
+      ]
+    }
+  ],
+  "accentColor": "#FFFFFF",
+  "permissions": [
+    "identity",
+    "messageTeamMembers"
+  ],
+  "configurableTabs": [
+    {
+      "configurationUrl": "<<websiteurl>>/configurable-tab",
+      "canUpdateConfiguration": true,
+      "scopes": [
+        "team"
+      ]
+    }
+  ],
+  "validDomains": []
+}
