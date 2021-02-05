@@ -66,9 +66,11 @@ namespace Microsoft.Teams.Apps.LearnNow
                 options.InstrumentationKey = configuration.GetValue<string>("ApplicationInsights:InstrumentationKey");
             });
 
-            services.Configure<BingCognitiveServiceSettings>(bingCognitiveServiceSetting =>
+            services.Configure<BingSearchServiceSettings>(bingCognitiveServiceSetting =>
             {
-                bingCognitiveServiceSetting.CognitiveServiceSubscriptionKey = configuration.GetValue<string>("CognitiveServiceKey");
+                bingCognitiveServiceSetting.Key = configuration.GetValue<string>("BingSearch:Key");
+                bingCognitiveServiceSetting.Endpoint = configuration.GetValue<string>("BingSearch:Endpoint");
+                bingCognitiveServiceSetting.SafeSearch = configuration.GetValue<string>("BingSearch:SafeSearch");
             });
 
             services.Configure<StorageSettings>(options =>
@@ -138,7 +140,8 @@ namespace Microsoft.Teams.Apps.LearnNow
         {
             services
                 .AddApplicationInsightsTelemetry(configuration.GetValue<string>("ApplicationInsights:InstrumentationKey"));
-            services.AddTransient<IImageProviderService, BingImageService>();
+            services.
+                AddHttpClient<IImageProviderService, BingImageService>();
             services
                .AddSingleton<TokenAcquisitionHelper>();
             services
