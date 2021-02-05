@@ -6,11 +6,16 @@ namespace Microsoft.Teams.Apps.LearnNow.Helpers
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
+    using System.Net.Http;
     using System.Threading.Tasks;
-    using Microsoft.Azure.CognitiveServices.Search.ImageSearch;
+    using System.Web;
     using Microsoft.Extensions.Options;
     using Microsoft.Teams.Apps.LearnNow.Common.Interfaces;
+    using Microsoft.Teams.Apps.LearnNow.Models;
     using Microsoft.Teams.Apps.LearnNow.Models.Configuration;
+    using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
 
     /// <summary>
     /// Service class for getting images from Bing image search API service.
@@ -30,21 +35,22 @@ namespace Microsoft.Teams.Apps.LearnNow.Helpers
         /// <summary>
         /// Bing cognitive service setting.
         /// </summary>
-        private readonly IOptions<BingCognitiveServiceSettings> options;
+        private readonly IOptions<BingSearchServiceSettings> options;
 
         /// <summary>
-        /// Image search client
+        /// Provides a base class for sending HTTP requests and receiving HTTP responses from a resource identified by a URI.
         /// </summary>
-        private readonly Lazy<Task<ImageSearchClient>> client;
+        private readonly HttpClient httpClient;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="BingImageService"/> class.
         /// </summary>
         /// <param name="options">Bing cognitive service settings</param>
-        public BingImageService(IOptions<BingCognitiveServiceSettings> options)
+        /// <param name="httpClient">Instance of HttpClient.</param>
+        public BingImageService(IOptions<BingSearchServiceSettings> options, HttpClient httpClient)
         {
             this.options = options ?? throw new ArgumentNullException(nameof(options));
-            this.client = new Lazy<Task<ImageSearchClient>>(() => this.InitializeClientAsync());
+            this.httpClient = httpClient;
         }
 
         /// <summary>
@@ -57,30 +63,28 @@ namespace Microsoft.Teams.Apps.LearnNow.Helpers
             var contentUrlResult = new List<string>();
 
             // Make the search request to the Bing Image API, and get the results.
-            var client = await this.client.Value;
-            var imageResults = await client.Images.SearchAsync(query: searchQueryTerm, height: BingImageHeight, width: BingImageWidth, safeSearch: "strict");
+            this.httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", this.options.Value.Key);
 
-            foreach (var image in imageResults.Value)
+            string requestUri = this.options.Value.Endpoint
+                + "?q=" + HttpUtility.HtmlEncode(searchQueryTerm)
+                + "&height=" + BingImageHeight
+                + "&width=" + BingImageWidth
+                + "&safeSearch=" + this.options.Value.SafeSearch;
+
+            HttpResponseMessage response = await this.httpClient.GetAsync(new Uri(requestUri));
+            string contentString = await response.Content.ReadAsStringAsync();
+            JObject siteListDataResponse = JObject.Parse(contentString);
+
+            if (siteListDataResponse["value"] != null)
             {
-                // Get image URL's that starts with https, http image URL's are not getting rendered in Microsoft Teams Task Module.
-                if (image.ContentUrl.StartsWith("https", StringComparison.OrdinalIgnoreCase))
-                {
-                    contentUrlResult.Add(image.ContentUrl);
-                }
+                var searchResult = siteListDataResponse["value"].ToString();
+                var images = JsonConvert.DeserializeObject<List<Images>>(searchResult);
+                var filteredUrlResult = images.Where(image => image.ContentUrl.StartsWith("https", StringComparison.OrdinalIgnoreCase))
+                    .Select(image => image.ContentUrl);
+                contentUrlResult.AddRange(filteredUrlResult);
             }
 
             return contentUrlResult;
-        }
-
-        /// <summary>
-        /// Method to initialize singleton Bing Image search API client object.
-        /// </summary>
-        /// <returns>Bing Image search client object.</returns>
-#pragma warning disable CS1998 // Method is async doe lazy initialization.
-        private async Task<ImageSearchClient> InitializeClientAsync()
-#pragma warning restore CS1998 // Method is async doe lazy initialization.
-        {
-            return new ImageSearchClient(new ApiKeyServiceClientCredentials(this.options.Value.CognitiveServiceSubscriptionKey));
         }
     }
 }

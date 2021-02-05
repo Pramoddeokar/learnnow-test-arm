@@ -123,10 +123,10 @@ namespace Microsoft.Teams.Apps.LearnNow
             this.configuration["MicrosoftAppPassword"] = client.GetSecret("MicrosoftAppPassword").Value.Value;
             this.configuration["SQLStorage:ConnectionString"] = client.GetSecret("SQLStorageConnectionString").Value.Value;
             this.configuration["Storage:BlobConnectionString"] = client.GetSecret("StorageBlobConnectionString").Value.Value;
-            this.configuration["CognitiveServiceKey"] = client.GetSecret("CognitiveServiceKey").Value.Value;
             this.configuration["SecurityGroup:TeacherSecurityGroupId"] = client.GetSecret("TeacherSecurityGroupId").Value.Value;
             this.configuration["SecurityGroup:AdminSecurityGroupId"] = client.GetSecret("AdminSecurityGroupId").Value.Value;
             this.configuration["SecurityGroup:ModeratorsGroupId"] = client.GetSecret("ModeratorsGroupId").Value.Value;
+            this.configuration["BingSearch:Key"] = client.GetSecret("BingSearchKey").Value.Value;
         }
     }
 }
