@@ -75,9 +75,9 @@ namespace Microsoft.Teams.Apps.LearnNow.Helpers
             string contentString = await response.Content.ReadAsStringAsync();
             JObject siteListDataResponse = JObject.Parse(contentString);
 
-            if (siteListDataResponse["images"] != null && siteListDataResponse["images"]["value"] != null)
+            if (siteListDataResponse["value"] != null)
             {
-                var searchResult = siteListDataResponse["images"]["value"].ToString();
+                var searchResult = siteListDataResponse["value"].ToString();
                 var images = JsonConvert.DeserializeObject<List<Images>>(searchResult);
                 var filteredUrlResult = images.Where(image => image.ContentUrl.StartsWith("https", StringComparison.OrdinalIgnoreCase))
                     .Select(image => image.ContentUrl);
