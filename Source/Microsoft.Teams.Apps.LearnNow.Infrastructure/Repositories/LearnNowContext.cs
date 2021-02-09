@@ -531,6 +531,10 @@ namespace Microsoft.Teams.Apps.LearnNow.Infrastructure.Repositories
                 entity.Property(e => e.UpdatedOn)
                     .HasColumnName("updatedOn")
                     .HasColumnType("datetimeoffset");
+
+                entity.HasIndex(e => new { e.Id, e.GroupId })
+                    .HasName("unique_tabconfiguration")
+                    .IsUnique();
             });
 
             modelBuilder.Entity<ResourceModuleMapping>().HasKey(x => new { x.ResourceId, x.LearningModuleId });

@@ -10,7 +10,7 @@
     "@microsoft/applicationinsights-web": "^2.5.9",
     "@microsoft/teams-js": "1.6.0",
     "@uifabric/icons": "7.3.47",
-    "axios": "0.19.2",
+    "axios": "0.21.1",
     "i18next": "19.4.5",
     "i18next-xhr-backend": "^3.2.2",
     "moment": "^2.29.1",
@@ -20,7 +20,7 @@
     "react-infinite-scroller": "^1.2.4",
     "react-moment": "^1.0.0",
     "react-router-dom": "5.2.0",
-    "react-scripts": "^3.4.4",
+    "react-scripts": "^4.0.2",
     "typescript": "3.9.3"
   },
   "scripts": {
