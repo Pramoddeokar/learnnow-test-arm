@@ -9,13 +9,12 @@ namespace Microsoft.Teams.Apps.LearnNow.Helpers
     using System.Linq;
     using System.Net.Http;
     using System.Threading.Tasks;
-    using System.Web;
+    using Microsoft.Extensions.Logging;
     using Microsoft.Extensions.Options;
     using Microsoft.Teams.Apps.LearnNow.Common.Interfaces;
-    using Microsoft.Teams.Apps.LearnNow.Models;
+    using Microsoft.Teams.Apps.LearnNow.Models.BingApiRequestModel;
     using Microsoft.Teams.Apps.LearnNow.Models.Configuration;
     using Newtonsoft.Json;
-    using Newtonsoft.Json.Linq;
 
     /// <summary>
     /// Service class for getting images from Bing image search API service.
@@ -43,14 +42,21 @@ namespace Microsoft.Teams.Apps.LearnNow.Helpers
         private readonly HttpClient httpClient;
 
         /// <summary>
+        /// Used to perform logging of errors and information.
+        /// </summary>
+        private readonly ILogger logger;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="BingImageService"/> class.
         /// </summary>
         /// <param name="options">Bing cognitive service settings</param>
         /// <param name="httpClient">Instance of HttpClient.</param>
-        public BingImageService(IOptions<BingSearchServiceSettings> options, HttpClient httpClient)
+        /// <param name="logger">Used to perform logging of errors and information.</param>
+        public BingImageService(IOptions<BingSearchServiceSettings> options, HttpClient httpClient, ILogger<BingImageService> logger)
         {
             this.options = options ?? throw new ArgumentNullException(nameof(options));
             this.httpClient = httpClient;
+            this.logger = logger;
         }
 
         /// <summary>
@@ -60,31 +66,35 @@ namespace Microsoft.Teams.Apps.LearnNow.Helpers
         /// <returns>Returns a collection of image URL from Bing Image API service.</returns>
         public async Task<IEnumerable<string>> GetSearchResultAsync(string searchQueryTerm)
         {
-            var contentUrlResult = new List<string>();
-
-            // Make the search request to the Bing Image API, and get the results.
-            this.httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", this.options.Value.Key);
-
-            string requestUri = this.options.Value.Endpoint
-                + "?q=" + HttpUtility.HtmlEncode(searchQueryTerm)
-                + "&height=" + BingImageHeight
-                + "&width=" + BingImageWidth
-                + "&safeSearch=" + this.options.Value.SafeSearch;
-
-            HttpResponseMessage response = await this.httpClient.GetAsync(new Uri(requestUri));
-            string contentString = await response.Content.ReadAsStringAsync();
-            JObject siteListDataResponse = JObject.Parse(contentString);
-
-            if (siteListDataResponse["value"] != null)
+            try
             {
-                var searchResult = siteListDataResponse["value"].ToString();
-                var images = JsonConvert.DeserializeObject<List<Images>>(searchResult);
-                var filteredUrlResult = images.Where(image => image.ContentUrl.StartsWith("https", StringComparison.OrdinalIgnoreCase))
-                    .Select(image => image.ContentUrl);
-                contentUrlResult.AddRange(filteredUrlResult);
-            }
+                var contentUrls = new List<string>();
 
-            return contentUrlResult;
+                // Make the search request to the Bing Image API, and get the results.
+                this.httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", this.options.Value.Key);
+
+                string requestUri = this.options.Value.Endpoint
+                    + "?q=" + Uri.EscapeDataString(searchQueryTerm)
+                    + "&height=" + BingImageHeight
+                    + "&width=" + BingImageWidth
+                    + "&safeSearch=" + this.options.Value.SafeSearch;
+
+                HttpResponseMessage response = await this.httpClient.GetAsync(new Uri(requestUri));
+                response.EnsureSuccessStatusCode();
+                string contentString = await response.Content.ReadAsStringAsync();
+                var bingApiResponse = JsonConvert.DeserializeObject<BingApiResponse>(contentString);
+
+                var filteredUrlResults = bingApiResponse.Images.Where(image => image.ContentUrl.StartsWith("https", StringComparison.OrdinalIgnoreCase))
+                    .Select(image => image.ContentUrl);
+                contentUrls.AddRange(filteredUrlResults);
+
+                return contentUrls;
+            }
+            catch (Exception ex)
+            {
+                this.logger.LogError(ex, $"Error while fetching Bing search results for search text: {searchQueryTerm}");
+                return null;
+            }
         }
     }
 }
