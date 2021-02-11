@@ -26,7 +26,7 @@
     },
     "appDisplayName": {
       "type": "string",
-      "defaultValue": "LearnNow",
+      "defaultValue": "Course Companion",
       "minLength": 1,
       "metadata": {
         "description": "The app (and bot) display name."
@@ -80,28 +80,28 @@
         "description": "Location for all resources."
       }
     },
-    "moderatoryGroupId": {
+	 "TeacherSecurityGroupId": {
       "type": "string",
       "minLength": 36,
       "maxLength": 36,
       "metadata": {
-        "description": "Teams group id of moderators who can add/edit/delete grade, subject and tag metadata."
+        "description": "Security group Id (Required for teacher user role)."
       }
     },
-    "teacherSecurityGroup": {
+	"AdminSecurityGroupId": {
       "type": "string",
       "minLength": 36,
       "maxLength": 36,
       "metadata": {
-        "description": "Security group Id (Required for teacher role)."
+        "description": "Security group Id (Required for admin user role)."
       }
     },
-    "adminSecurityGroup": {
+	"ModeratorsSecurityGroupId": {
       "type": "string",
       "minLength": 36,
       "maxLength": 36,
       "metadata": {
-        "description": "Security group Id (Required for administrator role)."
+        "description": "Security group Id (Required for moderator user role)."
       }
     },
     "cacheDurationInMinutes": {
@@ -125,6 +125,18 @@
       "defaultValue": "Azure Front Door",
       "metadata": {
         "description": "How the app will be hosted on a domain that is not *.azurewebsites.net. Azure Front Door is an easy option that the template can set up automatically, but it comes with ongoing monthly costs and is recommended for evaluation purposes only."
+      }
+    },
+	"safeSearchType": {
+      "type": "string",
+      "allowedValues": [
+        "Off",
+        "Moderate",
+        "Strict"
+      ],
+      "defaultValue": "Strict",
+      "metadata": {
+        "description": "Bing safe search is used to filters web-pages for adult content."
       }
     },
     "sqlAdministratorLogin": {
@@ -188,7 +200,7 @@
       "metadata": {
         "description": "The branch of the GitHub repository to deploy."
       },
-      "defaultValue": "master"
+      "defaultValue": "main"
     }
   },
   "variables": {
@@ -197,6 +209,8 @@
     "botAppUrl": "[concat('https://', variables('botAppDomain'))]",
     "hostingPlanName": "[parameters('baseResourceName')]",
     "appInsightsName": "[parameters('baseResourceName')]",
+	"storageName": "[parameters('baseResourceName')]",
+	"storageAccountName": "[concat(variables('storageName'), 'storage')]",
     "sharedSkus": [
       "Free",
       "Shared"
@@ -208,8 +222,9 @@
     "frontDoorDomain": "[toLower(concat(variables('frontDoorName'), '.azurefd.net'))]",
     "appBaseUri": "[concat('https://', variables('frontDoorDomain'))]",
     "bingSearchName": "[concat(variables('botAppName'), 'bingsearch')]",
+	"bingSearchApiUrl": "https://api.bing.microsoft.com/v7.0/images/search",
     "keyVaultName": "[concat(variables('botAppName'), 'vault')]",
-    "keyVaultUrl": "[concat('https://',variables('keyVaultName'), '.vault.azure.net/secrets/')]",
+    "keyVaultUrl": "[concat('https://',variables('keyVaultName'), '.vault.azure.net')]",
     "sqlServerName": "[toLower(concat(parameters('baseResourceName'), uniqueString(subscription().id, resourceGroup().id)))]",
     "databaseName": "[concat(parameters('baseResourceName'), 'DB')]",
     "databaseEdition": "[parameters('sqlPlanSize')]",
@@ -245,6 +260,16 @@
       },
       "kind": "Bing.Search.v7"
     },
+	{
+	"apiVersion": "2018-02-01",
+	"kind": "Storage",
+	"location": "[parameters('location')]",
+	"name": "[variables('storageAccountName')]",
+	"sku": {
+	"name": "Standard_LRS"
+	},
+	"type": "Microsoft.Storage/storageAccounts"
+	},
     {
       "apiVersion": "2015-05-01",
       "name": "[variables('appInsightsName')]",
@@ -299,7 +324,7 @@
             },
             {
               "name": "Bot:AppBaseUri",
-              "value": "[variables('appBaseUri')] "
+              "value": "[concat('https://', variables('frontDoorDomain'))]"
             },
             {
               "name": "Bot:TenantId",
@@ -311,19 +336,27 @@
             },
             {
               "name": "MicrosoftAppId",
-              "value": "[parameters('botClientId')]"
+              "value": ""
             },
             {
               "name": "MicrosoftAppPassword",
-              "value": "[parameters('botClientSecret')]"
-            },
-            {
-              "name": "Storage:TableStorageConnectionString",
-              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', parameters('storageAccountName'), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')),'2015-05-01-preview').key1)]"
+              "value": ""
             },
             {
               "name": "Storage:BlobConnectionString",
-              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', parameters('storageAccountName'), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')),'2015-05-01-preview').key1)]"
+              "value": ""
+            },
+			{
+              "name": "BingSearch:Endpoint",
+              "value": "[variables('bingSearchApiUrl')]"
+            },
+            {
+              "name": "BingSearch:Key",
+              "value": ""
+            },
+            {
+              "name": "BingSearch:SafeSearch",
+              "value": "[parameters('safeSearchType')]"
             },
             {
               "name": "Logging:LogLevel:Default",
@@ -331,7 +364,7 @@
             },
             {
               "name": "SQLStorage:ConnectionString",
-              "value": "[parameters('cacheDurationInMinutes')]"
+              "value": ""
             },
             {
               "name": "ApplicationInsights:InstrumentationKey",
@@ -347,22 +380,18 @@
             },
             {
               "name": "CognitiveServiceKey",
-              "value": "    listKeys(resourceId('Microsoft.Bing/accounts', variables('bingSearchName')),'2020-06-10').key1)"
+              "value": ""
             },
             {
               "name": "SecurityGroup:TeacherSecurityGroupId",
-              "value": "[parameters('teacherSecurityGroup')]"
+              "value": ""
             },
-            {
+			{
               "name": "SecurityGroup:AdminSecurityGroupId",
-              "value": "[parameters('adminSecurityGroup')]"
+              "value": ""
             },
-            {
-              "name": "SecurityGroup:ModeratorsGroupId",
-              "value": "[parameters('moderatoryGroupId')]"
-            },
-            {
-              "name": "SecurityGroup:ModeratorsGroupId",
+			{
+              "name": "SecurityGroup:ModeratorsSecurityGroupId",
               "value": ""
             },
             {
@@ -387,22 +416,23 @@
             },
             {
               "name": "WEBSITE_NODE_DEFAULT_VERSION",
-              "value": "10.15.2"
+              "value": "12.18.0"
             }
-          ]
-        },
-        "cors": {
+          ],
+		  "cors": {
           "supportCredentials": true,
           "allowedOrigins": [
             "[concat('https://', variables('frontDoorDomain'))]"
           ]
         }
+        }
       },
       "dependsOn": [
         "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
-        "[resourceId('Microsoft.Insights/components', variables('appInsightsName'))]"
+        "[resourceId('Microsoft.Insights/components', variables('appInsightsName'))]",
+		"[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
       ],
-	  "resources": [
+	  	  "resources": [
         {
           "apiVersion": "2016-08-01",
           "name": "web",
@@ -478,7 +508,7 @@
           ],
           "properties": {
             "startIpAddress": "0.0.0.0",
-            "endIpAddress": "255.255.255.255"
+            "endIpAddress": "0.0.0.0"
           }
         }
       ]
@@ -638,7 +668,8 @@
       "apiVersion": "2018-02-14",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Web/sites', variables('botAppName'))]"
+        "[resourceId('Microsoft.Web/sites', variables('botAppName'))]",
+		"[resourceId('Microsoft.Bing/accounts', variables('bingSearchName'))]"
       ],
       "tags": {
         "displayName": "KeyVault"
@@ -647,11 +678,11 @@
         "enabledForDeployment": "true",
         "enabledForTemplateDeployment": "true",
         "enabledForDiskEncryption": "true",
-		"tenantId": "[reference(concat('Microsoft.Web/sites/', variables('botAppName')), '2018-02-01', 'Full').identity.tenantId]",
+        "tenantId": "[subscription().tenantId]",
         "accessPolicies": [
           {
-            "tenantId": "[reference(resourceId('Microsoft.Web/sites', variables('botAppName')), '2016-08-01', 'Full').identity.tenantId]",
-            "objectId": "[reference(resourceId('Microsoft.Web/sites', variables('botAppName')), '2016-08-01', 'Full').identity.principalId]",
+            "tenantId": "[reference(resourceId('Microsoft.Web/sites', variables('botAppName')), '2018-02-01', 'Full').identity.tenantId]",
+            "objectId": "[reference(resourceId('Microsoft.Web/sites', variables('botAppName')), '2018-02-01', 'Full').identity.principalId]",
             "permissions": {
               "secrets": [
                 "all"
@@ -669,18 +700,6 @@
             "bypass": "AzureServices"
           }
         }
-      }
-    },
-    {
-      "type": "Microsoft.KeyVault/vaults/secrets",
-      "apiVersion": "2018-02-14",
-      "name": "[concat(variables('keyVaultName'), '/', 'Storage-TableStorageConnectionString')]",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
-      ],
-      "properties": {
-        "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', parameters('storageAccountName'), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')),'2015-05-01-preview').key1)]"
       }
     },
     {
@@ -710,7 +729,7 @@
     {
       "type": "Microsoft.KeyVault/vaults/secrets",
       "apiVersion": "2018-02-14",
-      "name": "[concat(variables('keyVaultName'), '/', 'SQLStorage-ConnectionString')]",
+      "name": "[concat(variables('keyVaultName'), '/', 'SQLStorageConnectionString')]",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
@@ -722,23 +741,22 @@
     {
       "type": "Microsoft.KeyVault/vaults/secrets",
       "apiVersion": "2018-02-14",
-      "name": "[concat(variables('keyVaultName'), '/', 'Storage-BlobConnectionString')]",
+      "name": "[concat(variables('keyVaultName'), '/', 'StorageBlobConnectionString')]",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
       ],
       "properties": {
-        "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', parameters('storageAccountName'), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')),'2015-05-01-preview').key1)]"
-      }
+		"value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')),'2015-05-01-preview').key1)]"
+	}
     },
     {
       "type": "Microsoft.KeyVault/vaults/secrets",
       "apiVersion": "2018-02-14",
-      "name": "[concat(variables('keyVaultName'), '/', 'CognitiveServiceKey')]",
+      "name": "[concat(variables('keyVaultName'), '/', 'BingSearchKey')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]",
-		"[resourceId('Microsoft.Bing/accounts', variables('bingSearchName'))]"
+        "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
       ],
       "properties": {
         "value": "[listKeys(variables('bingSearchName'),'2020-06-10').key1]"
@@ -747,37 +765,37 @@
     {
       "type": "Microsoft.KeyVault/vaults/secrets",
       "apiVersion": "2018-02-14",
-      "name": "[concat(variables('keyVaultName'), '/', 'SecurityGroup-TeacherSecurityGroupId')]",
+      "name": "[concat(variables('keyVaultName'), '/', 'TeacherSecurityGroupId')]",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
       ],
       "properties": {
-        "value": "[parameters('teacherSecurityGroup')]"
+        "value": "[parameters('TeacherSecurityGroupId')]"
       }
     },
-    {
+	{
       "type": "Microsoft.KeyVault/vaults/secrets",
       "apiVersion": "2018-02-14",
-      "name": "[concat(variables('keyVaultName'), '/', 'SecurityGroup-AdminSecurityGroupId')]",
+      "name": "[concat(variables('keyVaultName'), '/', 'AdminSecurityGroupId')]",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
       ],
       "properties": {
-        "value": "[parameters('adminSecurityGroup')]"
+        "value": "[parameters('AdminSecurityGroupId')]"
       }
     },
-    {
+	{
       "type": "Microsoft.KeyVault/vaults/secrets",
       "apiVersion": "2018-02-14",
-      "name": "[concat(variables('keyVaultName'), '/', 'SecurityGroup-ModeratorGroupId')]",
+      "name": "[concat(variables('keyVaultName'), '/', 'ModeratorsGroupId')]",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
       ],
       "properties": {
-        "value": "[parameters('moderatoryGroupId')]"
+        "value": "[parameters('ModeratorsSecurityGroupId')]"
       }
     }
   ],
